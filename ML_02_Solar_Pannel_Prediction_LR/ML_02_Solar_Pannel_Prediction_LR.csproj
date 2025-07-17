@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.ML" Version="4.0.2" />
+    <PackageReference Include="ScottPlot" Version="5.0.55" />
   </ItemGroup>
 
 </Project>

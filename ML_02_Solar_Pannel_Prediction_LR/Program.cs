@@ -1,9 +1,19 @@
 ﻿using Microsoft.ML;
+using ScottPlot.Plottables;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 //Refactor the code to use a saved model instead of training a new one every time
 //if the model exist then use that
 //if not then create a new model and save it to a file for later use
 //prediction of solar panel revenue based on sunshine hours
-
+//example data
+var data = new[]
+{
+    new SunData { SunHours = 1, Revenue = 100 },
+    new SunData { SunHours = 2, Revenue = 120 },
+    new SunData { SunHours = 3, Revenue = 140 },
+    new SunData { SunHours = 4, Revenue = 160 },
+    new SunData { SunHours = 5, Revenue = 180 }
+    };
 //Load the saved model
 ITransformer model;//variable to storage the loaded model
 var modelPath = "trainedmodel.zip";//Path the model file
@@ -19,15 +29,7 @@ if (File.Exists(modelPath))
 }
 else
 {
-    //example data
-    var data = new[]
-    {
-    new SunData { SunHours = 1, Revenue = 100 },
-    new SunData { SunHours = 2, Revenue = 120 },
-    new SunData { SunHours = 3, Revenue = 140 },
-    new SunData { SunHours = 4, Revenue = 160 },
-    new SunData { SunHours = 5, Revenue = 180 }
-};
+
     //Convert the data in DataView
     var trainingData = mlContext.Data.LoadFromEnumerable(data);
 
@@ -57,6 +59,19 @@ var prediction = predictionEngine.Predict(new SunData { SunHours = 6 });
 
 Console.WriteLine($"Predicted revenue for 6 hours of sunshine: {prediction.Score}");
 
+//Rendering the prediction result using scott
+//Phase 1: Install ScottPlot
+//Phase 2: Add ScottPlot to the project
+var plt = new ScottPlot.Plot();
+
+//Phase 3: Inserting originadl data into the chart
+double[] xData = data.Select(d => (double)d.SunHours).ToArray();
+double[] yData = data.Select(d => (double)d.Revenue).ToArray();
+var scatter = plt.Add.Scatter(xData, yData);
+scatter.LegendText = "Original Data";
+scatter.MarkerSize = 20;
+
+plt.SavePng("revenue_graph.png", 1024, 1024);
 #region classes
 
 public class SunData
