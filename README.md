@@ -1,0 +1,1 @@
+# ML_02_Solar_Pannel_Prediction_LR
