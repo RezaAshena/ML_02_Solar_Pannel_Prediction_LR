@@ -11,7 +11,7 @@ var mlContext = new MLContext();//Defintition of ML Context
 
 if (File.Exists(modelPath))
 {
-    using (var fileStream = new FileStream(modelPath, FileMode.Create, FileAccess.Read, FileShare.Read))
+    using (var fileStream = new FileStream(modelPath, FileMode.Open, FileAccess.Read, FileShare.Read))
     {
         model = mlContext.Model.Load(fileStream, out var ModelInputSchema);
     }
