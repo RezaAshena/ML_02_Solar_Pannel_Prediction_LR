@@ -1,50 +1,56 @@
-﻿// Create a model for predicting solar panel output using linear regression, relation between sunshine hours and revenue during the day.
-using Microsoft.ML;
+﻿using Microsoft.ML;
+//Refactor the code to use a saved model instead of training a new one every time
+//if the model exist then use that
+//if not then create a new model and save it to a file for later use
+//prediction of solar panel revenue based on sunshine hours
 
+//Load the saved model
+ITransformer model;//variable to storage the loaded model
+var modelPath = "trainedmodel.zip";//Path the model file
+var mlContext = new MLContext();//Defintition of ML Context
 
-//example data
-var data = new[]
+if (File.Exists(modelPath))
 {
+    using (var fileStream = new FileStream(modelPath, FileMode.Create, FileAccess.Read, FileShare.Read))
+    {
+        model = mlContext.Model.Load(fileStream, out var ModelInputSchema);
+    }
+    Console.WriteLine($"Loading model from {modelPath}");
+}
+else
+{
+    //example data
+    var data = new[]
+    {
     new SunData { SunHours = 1, Revenue = 100 },
     new SunData { SunHours = 2, Revenue = 120 },
     new SunData { SunHours = 3, Revenue = 140 },
     new SunData { SunHours = 4, Revenue = 160 },
     new SunData { SunHours = 5, Revenue = 180 }
 };
+    //Convert the data in DataView
+    var trainingData = mlContext.Data.LoadFromEnumerable(data);
 
-//Defintition of ML Context
-var mlContext = new MLContext();
+    //Create a regression pipeline
+    var pipeline = mlContext.Transforms.Concatenate("Features", nameof(SunData.SunHours))
+                       .Append(mlContext.Regression.Trainers.Sdca("Revenue"));
 
-//Convert the data in DataView
-var trainingData = mlContext.Data.LoadFromEnumerable(data);
+    //Train the data
+    model = pipeline.Fit(trainingData); //longest operation we will save the model to a file for later use
 
-//Create a regression pipeline
-var pipeline = mlContext.Transforms.Concatenate("Features", nameof(SunData.SunHours))
-                   .Append(mlContext.Regression.Trainers.Sdca("Revenue"));
 
-//Train the data
-var model = pipeline.Fit(trainingData); //longest operation we will save the model to a file for later use
+    //Save the model to a file
+    using (var fileStream = new FileStream(modelPath, FileMode.Create, FileAccess.Write, FileShare.Write))
+    {
+        mlContext.Model.Save(model, trainingData.Schema, fileStream);
+        Console.WriteLine($"Model saved to {modelPath}");
+    }
 
-#region Save the model
-//Save the model to a file
-var modelPath = "trainedmodel.zip";
-using (var fileStream = new FileStream(modelPath, FileMode.Create, FileAccess.Write, FileShare.Write))
-{
-    mlContext.Model.Save(model, trainingData.Schema, fileStream);
-    Console.WriteLine($"Model saved to {modelPath}");
 }
-#endregion
 
-#region reuse the  model
-//Load the saved model
-ITransformer loaddedModel;
-using (var fileStream = new FileStream(modelPath, FileMode.Create, FileAccess.Read, FileShare.Read))
-{
-  loaddedModel=mlContext.Model.Load(fileStream,out var ModelInputSchema);
-}
-#endregion
+
 //Create the prediction engine
-var predictionEngine = mlContext.Model.CreatePredictionEngine<SunData, RevenuePrediction>(loaddedModel);
+var predictionEngine = mlContext.Model.CreatePredictionEngine<SunData, RevenuePrediction>(model);
 
 //Make a prediction
 var prediction = predictionEngine.Predict(new SunData { SunHours = 6 });
