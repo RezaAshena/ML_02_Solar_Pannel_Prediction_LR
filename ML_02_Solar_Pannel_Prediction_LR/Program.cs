@@ -25,10 +25,26 @@ var pipeline = mlContext.Transforms.Concatenate("Features", nameof(SunData.SunHo
 //Train the data
 var model = pipeline.Fit(trainingData); //longest operation we will save the model to a file for later use
 
-//TODO: Save the model to a file
+#region Save the model
+//Save the model to a file
+var modelPath = "trainedmodel.zip";
+using (var fileStream = new FileStream(modelPath, FileMode.Create, FileAccess.Write, FileShare.Write))
+{
+    mlContext.Model.Save(model, trainingData.Schema, fileStream);
+    Console.WriteLine($"Model saved to {modelPath}");
+}
+#endregion
 
+#region reuse the  model
+//Load the saved model
+ITransformer loaddedModel;
+using (var fileStream = new FileStream(modelPath, FileMode.Create, FileAccess.Read, FileShare.Read))
+{
+  loaddedModel=mlContext.Model.Load(fileStream,out var ModelInputSchema);
+}
+#endregion
 //Create the prediction engine
-var predictionEngine = mlContext.Model.CreatePredictionEngine<SunData, RevenuePrediction>(model);
+var predictionEngine = mlContext.Model.CreatePredictionEngine<SunData, RevenuePrediction>(loaddedModel);
 
 //Make a prediction
 var prediction = predictionEngine.Predict(new SunData { SunHours = 6 });
