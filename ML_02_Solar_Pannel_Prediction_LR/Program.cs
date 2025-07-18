@@ -12,7 +12,8 @@ var data = new[]
     new SunData { SunHours = 2, Revenue = 120 },
     new SunData { SunHours = 3, Revenue = 140 },
     new SunData { SunHours = 4, Revenue = 160 },
-    new SunData { SunHours = 5, Revenue = 180 }
+    new SunData { SunHours = 5, Revenue = 180 },
+    new SunData { SunHours = 6, Revenue = 200 }
     };
 //Load the saved model
 ITransformer model;//variable to storage the loaded model
@@ -69,7 +70,17 @@ double[] xData = data.Select(d => (double)d.SunHours).ToArray();
 double[] yData = data.Select(d => (double)d.Revenue).ToArray();
 var scatter = plt.Add.Scatter(xData, yData);
 scatter.LegendText = "Original Data";
-scatter.MarkerSize = 20;
+scatter.MarkerSize = 10;
+
+//Phase 4: insert the regression line
+double[] xLine = Enumerable.Range(0, xData.Length).Select(d => (double)d).ToArray(); //indipendente
+double[] yLine = xLine.Select(d => (double)predictionEngine.Predict(new SunData { SunHours = (float)d }).Score).ToArray(); //dependente
+var regressionLine = plt.Add.Scatter(xLine, yLine);
+regressionLine.LegendText = "Regression Line";
+
+plt.Title("Solar Panel Revenue Prediction");
+plt.XLabel("Sun Hours");
+plt.YLabel("Revenue in $");
 
 plt.SavePng("revenue_graph.png", 1024, 1024);
 #region classes
